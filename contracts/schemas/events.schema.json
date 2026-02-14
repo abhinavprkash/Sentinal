@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sentinel/contracts/events.schema.json",
+  "title": "PipelineEvents",
+  "type": "string",
+  "enum": [
+    "IncidentReceived",
+    "TriageCompleted",
+    "InvestigationCompleted",
+    "PatchGenerated",
+    "VerificationCompleted",
+    "ApprovalPackageReady",
+    "IncidentEscalated",
+    "IncidentApproved",
+    "IncidentRejected",
+    "RetryTriggered"
+  ]
+}

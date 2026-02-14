@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sentinel/contracts/approval-package.schema.json",
+  "title": "ApprovalPackage",
+  "type": "object",
+  "required": [
+    "pr_url",
+    "rca_summary",
+    "evidence_links",
+    "rollback_steps",
+    "telemetry_snapshot"
+  ],
+  "properties": {
+    "pr_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "rca_summary": {
+      "type": "string"
+    },
+    "evidence_links": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "rollback_steps": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "telemetry_snapshot": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

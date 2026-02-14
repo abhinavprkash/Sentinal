@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sentinel/contracts/incident-envelope.schema.json",
+  "title": "IncidentEnvelope",
+  "type": "object",
+  "required": [
+    "incident_id",
+    "service",
+    "env",
+    "start_time",
+    "signal_type",
+    "signal_payload"
+  ],
+  "properties": {
+    "incident_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "service": {
+      "type": "string",
+      "minLength": 1
+    },
+    "env": {
+      "type": "string",
+      "enum": ["prod", "staging", "dev", "test"]
+    },
+    "start_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "signal_type": {
+      "type": "string"
+    },
+    "signal_payload": {
+      "type": "object",
+      "properties": {
+        "error_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "baseline_error_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "endpoint": { "type": "string" },
+        "latency_p95_ms": { "type": "number", "minimum": 0.0 }
+      },
+      "additionalProperties": true
+    },
+    "runbook_hint": {
+      "type": ["string", "null"]
+    }
+  },
+  "additionalProperties": false
+}
