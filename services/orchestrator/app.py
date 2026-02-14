@@ -47,6 +47,12 @@ def create_incident(payload: dict) -> dict:
         raise HTTPException(status_code=500, detail=f"Pipeline failure: {exc}") from exc
 
 
+@app.get("/api/v1/incidents")
+def list_incidents() -> dict:
+    records = engine.list_incidents()
+    return {"incidents": [to_primitive(record) for record in records]}
+
+
 @app.get("/api/v1/incidents/{incident_id}")
 def get_incident(incident_id: str) -> dict:
     record = engine.get_incident(incident_id)

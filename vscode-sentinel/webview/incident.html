@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incident Details</title>
+    <style>
+        :root {
+            --background: #1e1e1e;
+            --foreground: #d4d4d4;
+            --accent: #00bcd4; /* Neon Cyan */
+            --accent-dim: #00bcd433;
+            --success: #4caf50;
+            --error: #f44336;
+            --warning: #ff9800;
+            --card-bg: #2d2d2d;
+            --border: #3e3e3e;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--background);
+            color: var(--foreground);
+            padding: 20px;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3 { color: #fff; margin-top: 0; }
+        h1 { font-size: 24px; border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 20px; }
+        h2 { font-size: 18px; color: var(--accent); margin-top: 30px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .badge.critical { background: var(--error); color: #fff; }
+        .badge.high { background: var(--warning); color: #000; }
+        .badge.medium { background: var(--accent); color: #000; }
+        .badge.low { background: #9e9e9e; color: #000; }
+
+        .status-badge {
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background: var(--border);
+        }
+        .status-badge.pr_ready { background: var(--accent); color: #000; }
+        .status-badge.approved { background: var(--success); color: #fff; }
+        .status-badge.rejected { background: var(--error); color: #fff; }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .metric-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .metric-label { font-size: 12px; opacity: 0.7; }
+        .metric-value { font-size: 18px; font-weight: bold; color: var(--accent); }
+
+        pre {
+            background: #111;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            color: #bdc3c7;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.8; }
+        button.primary { background: var(--success); color: #fff; }
+        button.danger { background: var(--error); color: #fff; }
+        button.secondary { background: var(--border); color: #fff; }
+        button.accent { background: var(--accent); color: #000; }
+
+        .timeline {
+            border-left: 2px solid var(--border);
+            padding-left: 20px;
+            margin-left: 10px;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -26px;
+            top: 5px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+        .timestamp { font-size: 12px; opacity: 0.5; }
+
+        /* Diff highlight mimic */
+        .diff-added { color: var(--success); background: #4caf5011; display: block; }
+        .diff-removed { color: var(--error); background: #f4433611; display: block; }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        const vscode = acquireVsCodeApi();
+        // INCIDENT_DATA placeholder is replaced by extension
+        const incident = {{INCIDENT_DATA}}; // injected by typescript
+
+        function timeAgo(isoString) {
+            const date = new Date(isoString);
+            const now = new Date();
+            const seconds = Math.floor((now - date) / 1000);
+            if (seconds < 60) return `${seconds}s ago`;
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            return `${hours}h ago`;
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            
+            // Header
+            let html = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <h1 style="margin-bottom: 5px; border: none;">${incident.incident.incident_id}</h1>
+                        <div style="font-size: 14px; opacity: 0.8;">
+                            ${incident.incident.service} (${incident.incident.env}) 
+                            • <span class="badge ${incident.status}">${incident.status}</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 24px; font-weight: bold; color: var(--accent);">
+                            ${(incident.confidence * 100).toFixed(0)}%
+                        </div>
+                        <div style="font-size: 12px; opacity: 0.7;">Confidence</div>
+                    </div>
+                </div>
+            `;
+
+            // Progress Bar (Simple)
+            const stages = ['receive', 'triage', 'investigate', 'patch', 'verify', 'approve'];
+            // This is a rough visual
+            
+            // Investigation
+            if (incident.investigation) {
+                html += `
+                    <h2>🔬 Investigation</h2>
+                    <div class="card">
+                        <div class="metric-grid">
+                            <div class="metric-item">
+                                <div class="metric-label">Suspected Release</div>
+                                <div class="metric-value" style="font-size: 14px;">${incident.investigation.suspected_release || 'N/A'}</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-label">Affected Endpoints</div>
+                                <div class="metric-value" style="font-size: 14px;">${incident.investigation.affected_endpoints.length}</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-label">Root Cause Hypothesis</div>
+                                <div class="metric-value" style="font-size: 14px;">${incident.investigation.reason}</div>
+                            </div>
+                        </div>
+                        <h3>Log Evidence</h3>
+                        <pre>${incident.investigation.log_evidence.join('\n')}</pre>
+                    </div>
+                `;
+            }
+
+            // Patch
+            if (incident.patch) {
+                html += `
+                    <h2>🛠️ Patch Proposal</h2>
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>
+                                <strong>Repository:</strong> ${incident.patch.repo}:${incident.patch.branch}<br>
+                                <strong>Risk Level:</strong> <span class="badge ${incident.patch.risk_level}">${incident.patch.risk_level}</span>
+                            </div>
+                            <button class="accent" onclick="vscode.postMessage({command: 'openDiff', incidentId: '${incident.incident.incident_id}'})">View Diff in Editor</button>
+                        </div>
+                        <h3>Hypothesis</h3>
+                        <p>${incident.patch.hypothesis}</p>
+                        <h3>Diff Summary</h3>
+                        <pre>${incident.patch.diff_summary}</pre>
+                    </div>
+                `;
+            }
+
+            // Verification
+            if (incident.verification) {
+                const pass = incident.verification.pass_fail;
+                html += `
+                    <h2>✅ Verification</h2>
+                    <div class="card" style="border-left: 5px solid ${pass ? 'var(--success)' : 'var(--error)'}">
+                        <h3 style="color: ${pass ? 'var(--success)' : 'var(--error)'}">
+                            ${pass ? 'VERIFICATION PASSED' : 'VERIFICATION FAILED'}
+                        </h3>
+                        <div class="metric-grid">
+                            ${Object.entries(incident.verification.test_results).map(([test, result]) => `
+                                <div class="metric-item">
+                                    <div class="metric-label">${test}</div>
+                                    <div class="metric-value" style="color: ${result === 'passed' ? 'var(--success)' : 'var(--error)'}">${result}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Approval Actions
+            if (incident.status === 'pr_ready') {
+                html += `
+                    <h2>👤 Approval Required</h2>
+                    <div class="card">
+                        <p>A fix has been generated and verified. Review the artifacts below and approve deployment.</p>
+                        <div class="actions">
+                            <button class="primary" onclick="vscode.postMessage({command: 'approve', incidentId: '${incident.incident.incident_id}'})">Approve & Merge</button>
+                            <button class="danger" onclick="vscode.postMessage({command: 'reject', incidentId: '${incident.incident.incident_id}'})">Reject</button>
+                        </div>
+                        ${incident.approval_package ? `<p><a href="${incident.approval_package.pr_url}">View PR on GitHub</a></p>` : ''}
+                    </div>
+                `;
+            } else if (incident.status === 'approved') {
+                 html += `
+                    <h2>🎉 Approved</h2>
+                    <div class="card">
+                        <p>This incident was approved and is being merged.</p>
+                    </div>
+                `;
+            }
+
+             // Escalated Actions (Retry)
+            if (incident.status === 'escalated' || incident.status === 'failed') {
+                html += `
+                    <h2>⚠️ Escalated</h2>
+                    <div class="card" style="border-left: 5px solid var(--warning)">
+                        <p>Autonomous resolution failed. Manual intervention required.</p>
+                        <p><strong>Reason:</strong> ${incident.last_error || 'Unknown error'}</p>
+                        <div class="actions">
+                            <button class="secondary" onclick="vscode.postMessage({command: 'retry', incidentId: '${incident.incident.incident_id}', stage: 'triage'})">Retry from Start</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            app.innerHTML = html;
+        }
+
+        render();
+    </script>
+</body>
+</html>

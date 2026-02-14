@@ -1,0 +1,124 @@
+{
+  "name": "sentinel-vscode",
+  "publisher": "sentinel",
+  "displayName": "Sentinel",
+  "description": "Autonomous incident response for VS Code. Turns alerts into verified PRs.",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "sentinel.triggerSynthetic",
+        "title": "Sentinel: Trigger Synthetic 5xx Incident"
+      },
+      {
+        "command": "sentinel.refresh",
+        "title": "Sentinel: Refresh Incidents",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "sentinel.viewIncident",
+        "title": "View Incident Details"
+      },
+      {
+        "command": "sentinel.approveIncident",
+        "title": "Approve Incident"
+      },
+      {
+        "command": "sentinel.rejectIncident",
+        "title": "Reject Incident"
+      },
+      {
+        "command": "sentinel.retryIncident",
+        "title": "Retry Incident Stage"
+      },
+      {
+        "command": "sentinel.openDiff",
+        "title": "View Patch Diff"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "sentinel-explorer",
+          "title": "Sentinel",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "sentinel-explorer": [
+        {
+          "id": "sentinel-incidents",
+          "name": "Active Incidents"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "sentinel.refresh",
+          "group": "navigation",
+          "when": "view == sentinel-incidents"
+        },
+        {
+          "command": "sentinel.triggerSynthetic",
+          "group": "navigation",
+          "when": "view == sentinel-incidents"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "sentinel.viewIncident",
+          "group": "inline"
+        },
+        {
+          "command": "sentinel.approveIncident",
+          "group": "inline",
+          "when": "viewItem == pr_ready"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Sentinel",
+      "properties": {
+        "sentinel.serverUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:8000",
+          "description": "URL of the Sentinel Orchestrator API."
+        },
+        "sentinel.pollIntervalMs": {
+          "type": "number",
+          "default": 3000,
+          "description": "Polling interval for incident updates in milliseconds."
+        },
+        "sentinel.autoRefresh": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically poll for incident updates."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "test": "echo \"No tests yet\""
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "18.x",
+    "typescript": "^5.3.3"
+  }
+}

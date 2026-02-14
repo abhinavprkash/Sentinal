@@ -82,6 +82,9 @@ class SentinelEngine:
             raise KeyError(f"Incident not found: {incident_id}")
         return record
 
+    def list_incidents(self) -> list[IncidentRecord]:
+        return self.state_store.list_all()
+
     def approve_incident(self, incident_id: str, approve_request: ApproveRequest) -> str:
         record = self.require_incident(incident_id)
         if record.status != IncidentStatus.PR_READY:

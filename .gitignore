@@ -4,3 +4,10 @@ __pycache__/
 *.pyd
 
 storage/patterns.db
+
+vscode-sentinel/node_modules/
+vscode-sentinel/out/
+vscode-sentinel/.vscode-test/
+
+/node_modules. 
+.venv
